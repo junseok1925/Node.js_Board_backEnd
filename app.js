@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const port = 3001;
 
-const postsRouter = require("./routes/posts.js"); //goods.js에 있는 router를 반환받음
+const postsRouter = require("./routes/posts.js"); //posts.js에 있는 router를 반환받음
 const commentsRouter = require("./routes/comments.js");
 const connect = require("./schemas");
 connect(); // 가져온 connect 함수 실행
@@ -14,7 +14,6 @@ connect(); // 가져온 connect 함수 실행
 app.use(express.json());
 //전역미들웨어
 // 기본적으로 코드는 위에서 아래로 실행되기때문에 app.use()를 거치고 아래 코드 실행됨
-//  URL주소뒤에 "/api" 이 경로로 들어왔으면 goodRouter를 통해서 가라
 app.use("/api", [postsRouter, commentsRouter]);
 
 app.get("/", (req, res) => {
