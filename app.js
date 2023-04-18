@@ -12,10 +12,10 @@ connect(); // 가져온 connect 함수 실행
 // 모든 코드에서 body-parse를 등록해서 Request안에 있는 body데이터를 쓰겠다
 //post로 들어오는 body데이터를 사용하기 위해서는 이 문법을 통해 사용가능
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // 추가
 //전역미들웨어
 // 기본적으로 코드는 위에서 아래로 실행되기때문에 app.use()를 거치고 아래 코드 실행됨
-app.use("/api", [postsRouter, commentsRouter]);
+app.use("/api/", postsRouter); // /api/posts 경로를 처리할 postsRouter 등록
+app.use("/api/", commentsRouter);
 
 app.get("/", (req, res) => {
     res.send("Hello World!");
