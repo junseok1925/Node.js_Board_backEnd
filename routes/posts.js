@@ -27,7 +27,7 @@ router.get("/posts/:postId", async (req, res) => {
   if (!post) {
     return res.status(404).json({
       success: false,
-      errorMessage: "해당 게시글을 찾을 수 없습니다.",
+      errorMessage: "게시글 조회에 실패했습니다.",
     });
   }
   // 모두 정상적으로 입력되었을 때 출력
@@ -118,7 +118,7 @@ router.delete("/posts/:postId", async (req, res) => {
     });
   }
 
-  // 게시글 업데이트
+  // 게시글 삭제
   await Posts.deleteOne({_id: postId});
 
   res.json({message: "게시글이 삭제되었습니다.",});
@@ -136,8 +136,5 @@ router.post("/posts", async (req, res) => {
   const createdPost = await Posts.create({ user, password, title, content, createdAt: new Date()});
   res.json({ message: "게시글을 생성하였습니다.", 등록완료: createdPost});
 });
-
-// ===============================댓글 등록 API===============================
-
 
 module.exports = router;

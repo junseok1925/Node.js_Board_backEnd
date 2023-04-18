@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const commentsSchema = new mongoose.Schema(
   {
     user: { type: String, required: true },
-    password: { type: String, required: true, unique: true},
+    password: { type: String, required: true},
     content: { type: String, required: true },
-    createdAt: Date // createdAt 필드 추가
+    createdAt: {type: Date, required: true, default: Date.now},
+    postId: {type: String, required: true}
   },
 );
 
