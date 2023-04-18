@@ -14,8 +14,8 @@ connect(); // 가져온 connect 함수 실행
 app.use(express.json());
 //전역미들웨어
 // 기본적으로 코드는 위에서 아래로 실행되기때문에 app.use()를 거치고 아래 코드 실행됨
-app.use("/api/", postsRouter); // /api/posts 경로를 처리할 postsRouter 등록
-app.use("/api/", commentsRouter);
+app.use("/api", postsRouter); // /api/posts 경로를 처리할 postsRouter 등록
+app.use("/api", commentsRouter);
 
 app.get("/", (req, res) => {
     res.send("Hello World!");

@@ -1,81 +1,143 @@
-const express = require("express"); // express라이브러리를 express 변수에 할당
-const router = express.Router(); // 다시 express.Router()라는 함수를 실행시켜 router이라는 변수에 할당
+const express = require("express");
+const router = express.Router();
+const Posts = require("../schemas/posts");
 
-const posts = [
-  {
-    postId: "62d6d12cd88cadd496a9e54e",
-    user: "Developer",
-    title: "안녕하세요",
-    createdAt: "2022-07-19T15:43:40.266Z",
-  },
-  {
-    postId: "62d6cc66e28b7aff02e82954",
-    user: "Developer",
-    title: "안녕하세요",
-    createdAt: "2022-07-19T15:23:18.433Z",
-  },
-];
-
-//=================================== 계시글 조회 ================================
-//localhost:3001/api/posts(get)
-router.get("/posts", async (req, res) => { 
-    res.status(200).json(posts); // 응답으로 전체 게시물 목록을 보냄
+// ===============================게시글 조회 API===============================
+router.get("/posts", async (req, res) => {
+  const posts = await Posts.find(); // Posts 모델의 모든 데이터를 조회해서 posts에 할당
+  const getPosts = posts.map((post) => { 
+    return {postId: post._id, user: post.user, title: post.title, createdAt: post.createdAt};
+          //postId에 post._id의 값을 할당
   });
+  res.json({ data: getPosts });
+});
 
-//=================================== 게시글 상세 조회 ================================
+// ===============================게시글 상세조회 API===============================
 
-//localhost:3001/api/posts/postId(get)
-// 게시글 상세 조회 API
-router.get("/posts/:postId", (req, res) => {
-  const { postId } = req.params;
-  //filter를 사용
-  const [result] = posts.filter((posts) => postId === posts.postId);
-  if (!result) {
+router.get("/posts/:postId", async (req, res) => {
+  const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
+  // # 400 body 또는 params를 입력받지 못한 경우
+  if (!postId) {
     return res.status(400).json({
-    message: "데이터 형식이 올바르지 않습니다.",
+      message: "데이터 형식이 올바르지 않습니다.",
     });
-    }
-    res.status(200).json({ detail: result });
+  }
+  const post = await Posts.findById(postId); // 입력받은 postId를 가진 데이터를 post에 할당
+  // # 404 _postId에 해당하는 게시글이 존재하지 않을 경우
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      errorMessage: "해당 게시글을 찾을 수 없습니다.",
     });
-//=================================== 게시글 수정 ================================
+  }
+  // 모두 정상적으로 입력되었을 때 출력
+  const getPosts = [post].map((post) => {
+    return {postId: post._id, user: post.user, title: post.title, content: post.content, createdAt: post.createdAt,};
+  });     
+  res.json({ 조회완료: getPosts[0] });
+});
 
-
-//=================================== 계시글 작성 ================================
-
-// 게시글 등록 API
-////localhost:3001/api/posts (post)
-const Posts = require("../schemas/posts"); // post메서드를 이용해서 body데이터를 불러와 등록
-router.post("/posts", async (req, res) => {
+// ===============================게시글 수정 API===============================
+router.put("/posts/:postId", async (req, res) => {
+  const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
   const { user, password, title, content } = req.body;
 
+  // # 400 body 또는 params를 입력받지 못한 경우
+  if (!postId || !user || !password || !title || !content) {
+    return res.status(400).json({
+      message: "데이터 형식이 올바르지 않습니다.",
+    });
+  }
+  //
+  const post = await Posts.findById(postId);// 입력받은 postId를 가진 데이터를 post에 할당
 
-  // 만약 게시글을 작성할때 user,password,title,content의 값을 입력하지않으면 작성이 안됨
-  if (
-    !req.body.user ||
-    !req.body.password ||
-    !req.body.title ||
-    !req.body.content
-  ) {
+  // 입력받은 postId의 값을 가진 데이터가 없을 때
+  //# 404 _postId에 해당하는 게시글이 존재하지 않을 경우
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      errorMessage: "게시판 조회에 실패하였습니다.",
+    });
+  }
+
+  // 비밀번호가 일치하는지 확인
+  if (post.password !== password) {
+    return res.status(401).json({
+      success: false,
+      errorMessage: "비밀번호가 일치하지 않습니다.",
+    });
+  }
+
+  // 게시글 업데이트
+  const updatePost = await Posts.findByIdAndUpdate(
+    postId,
+    { user, title, content },
+    { new: true } //findByIdAndUpdate메서드가 수정된 데이터를 반환할지 결정한다
+                  //기본값으론 수정전 데이터를 반환하지만 new: true를 사용하면 수정된 문서가 반환된다.
+  );
+
+  res.json({message: "게시글이 성공적으로 수정되었습니다.", 수정완료: {
+                                                            postId: updatePost._id,
+                                                            user: updatePost.user,
+                                                            title: updatePost.title,
+                                                            content: updatePost.content,
+                                                            createdAt: updatePost.createdAt,
+                                                          },
+  });
+});
+
+// ===============================게시글 삭제 API===============================
+
+router.delete("/posts/:postId", async (req, res) => {
+  const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
+  const password = req.body.password;  // body에 입력한 값을 password에 할당
+
+  // # 400 body 또는 params를 입력받지 못한 경우
+  if (!postId || !password) {
+    return res.status(400).json({
+      message: "데이터 형식이 올바르지 않습니다.",
+    });
+  }
+  // 입력받은 postId를 가진 데이터를 post에 할당
+  const post = await Posts.findById(postId);
+
+  // 입력받은 postId의 값을 가진 데이터가 없을 때
+  //# 404 _postId에 해당하는 게시글이 존재하지 않을 경우
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      errorMessage: "게시판 조회에 실패하였습니다.",
+    });
+  }
+
+  // 비밀번호가 일치하는지 확인
+  if (post.password !== password) {
+    return res.status(401).json({
+      success: false,
+      errorMessage: "비밀번호가 일치하지 않습니다.",
+    });
+  }
+
+  // 게시글 업데이트
+  await Posts.deleteOne({_id: postId});
+
+  res.json({message: "게시글이 삭제되었습니다.",});
+});
+
+// ===============================게시글 등록 API===============================
+router.post("/posts", async (req, res) => {
+  const { user, password, title, content } = req.body;
+  if (!user || !password || !title || !content) {
     return res.status(400).json({
       success: false,
       errorMessage: "데이터 형식이 올바르지 않습니다",
     });
   }
-  //================================== create함수를 이용 압력받은 게시물을 등록 ================================
-
-  const { ObjectId } = require("mongodb"); //게시글마다 고유한 postId를 부여
-  const createdAt = new Date();
-  const createdPosts = await Posts.create({
-    postId: new ObjectId().toString(),
-    user,
-    password,
-    title,
-    content,
-    createdAt: new Date(), //현재 시간을 저장
-  });
-
-res.json({ message: "게시글을 생성하였습니다."});
-
+  const createdPost = await Posts.create({ user, password, title, content, createdAt: new Date()});
+  res.json({ message: "게시글을 생성하였습니다.", 등록완료: createdPost});
 });
 
-module.exports = router; // posts.js파일 안에 있는 변수router를 app.js에 보내줘야할때 선언 방식
+// ===============================댓글 등록 API===============================
+
+
+module.exports = router;
