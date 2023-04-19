@@ -54,11 +54,11 @@ router.get("/posts/:postId/comments", async (req, res) => {
       message: "댓글이 존재하지 않습니다.",
     });
   }
-  const getComment = [comments].map((getComment) => ({
-    commentId: getComment.postId,
-    user: getComment.user,
-    content: getComment.content,
-    createdAt: getComment.createdAt,
+  const getComment = comments.map((comment) => ({
+    commentId: comment._id,
+    user: comment.user,
+    content: comment.content,
+    createdAt: comment.createdAt,
   }));
   return res.status(200).json({ 댓글목록: getComment });
 });

@@ -32,7 +32,7 @@ router.get("/posts/:postId", async (req, res) => {
     });
   }
   // 모두 정상적으로 입력되었을 때 출력
-  const getPosts = [post].map((post) => {
+  const getPosts = post.map((post) => { //오류해결 : 이미 comments는 배열 형태이므로 []로 감싸면 안됨
     return {postId: post._id, user: post.user, title: post.title, content: post.content, createdAt: post.createdAt,};
   });     
   res.json({ 조회완료: getPosts[0] });
