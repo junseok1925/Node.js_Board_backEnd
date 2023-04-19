@@ -3,6 +3,7 @@ const router = express.Router();
 const Posts = require("../schemas/posts");
 
 // ===============================게시글 조회 API===============================
+// localhost:3001/api/posts
 router.get("/posts", async (req, res) => {
   const posts = await Posts.find(); // Posts 모델의 모든 데이터를 조회해서 posts에 할당
   const getPosts = posts.map((post) => { 
@@ -13,7 +14,7 @@ router.get("/posts", async (req, res) => {
 });
 
 // ===============================게시글 상세조회 API===============================
-
+//localhost:3001/api/posts/postId
 router.get("/posts/:postId", async (req, res) => {
   const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
   // # 400 body 또는 params를 입력받지 못한 경우
@@ -38,6 +39,7 @@ router.get("/posts/:postId", async (req, res) => {
 });
 
 // ===============================게시글 수정 API===============================
+//localhost:3001/api/posts/postId
 router.put("/posts/:postId", async (req, res) => {
   const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
   const { user, password, title, content } = req.body;
@@ -87,7 +89,7 @@ router.put("/posts/:postId", async (req, res) => {
 });
 
 // ===============================게시글 삭제 API===============================
-
+//localhost:3001/api/posts/postId
 router.delete("/posts/:postId", async (req, res) => {
   const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
   const password = req.body.password;  // body에 입력한 값을 password에 할당
@@ -125,6 +127,7 @@ router.delete("/posts/:postId", async (req, res) => {
 });
 
 // ===============================게시글 등록 API===============================
+//localhost:3001/api/posts
 router.post("/posts", async (req, res) => {
   const { user, password, title, content } = req.body;
   if (!user || !password || !title || !content) {

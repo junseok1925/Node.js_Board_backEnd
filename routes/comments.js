@@ -4,6 +4,7 @@ const Comments = require("../schemas/comments.js");
 const Posts = require("../schemas/posts.js");
 
 // ===============================댓글 등록 API===============================
+//localhost:3001/posts/postId/comments
 router.post("/posts/:postId/comments", async (req, res) => {
   const postId = req.params.postId;
   const { user, password, content } = req.body;
@@ -35,6 +36,7 @@ router.post("/posts/:postId/comments", async (req, res) => {
     .json({ message: "댓글을 생성하였습니다.", 댓글생성완료: createdComments });
 });
 // ===============================댓글 목록 조회 API===============================
+//localhost:3001/posts/postId/comments
 router.get("/posts/:postId/comments", async (req, res) => {
   const postId = req.params.postId;
   const post = await Posts.findById(postId);
@@ -52,7 +54,7 @@ router.get("/posts/:postId/comments", async (req, res) => {
       message: "댓글이 존재하지 않습니다.",
     });
   }
-  const getComment = comments.map((getComment) => ({
+  const getComment = [comments].map((getComment) => ({
     commentId: getComment.postId,
     user: getComment.user,
     content: getComment.content,
@@ -62,7 +64,7 @@ router.get("/posts/:postId/comments", async (req, res) => {
 });
 
 // ===============================댓글 수정 API===============================
-
+//localhost:3001/posts/postId/comments/commentId
 router.put("/posts/:postId/comments/:commentId", async (req, res) => {
   const commentId = req.params.commentId;
   const { password, content } = req.body;
@@ -104,6 +106,7 @@ router.put("/posts/:postId/comments/:commentId", async (req, res) => {
   });
 });
 // ===============================댓글 삭제 API===============================
+//localhost:3001/posts/postId/comments/commentId
 router.delete("/posts/:postId/comments/:commentId", async (req, res) => {
     const postId = req.params.postId;
     const commentId = req.params.commentId;

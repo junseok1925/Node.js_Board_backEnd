@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 3001;
+const port = 3000;
 
 const postsRouter = require("./routes/posts.js"); //posts.js에 있는 router를 반환받음
 const commentsRouter = require("./routes/comments.js");
