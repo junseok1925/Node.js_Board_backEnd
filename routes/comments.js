@@ -21,9 +21,9 @@ router.post("/posts/:postId/comments", async (req, res) => {
       message: "게시글 조회에 실패하였습니다.",
     });
   }
-  if (!post.comments) {
-    post.comments = [];
-  }
+  // if (!post.comments) {
+  //   post.comments = [];
+  // }
   const createdComments = await Comments.create({
     user: user,
     password: password,
@@ -36,7 +36,7 @@ router.post("/posts/:postId/comments", async (req, res) => {
     .json({ message: "댓글을 생성하였습니다.", 댓글생성완료: createdComments });
 });
 // ===============================댓글 목록 조회 API===============================
-//localhost:3001/posts/postId/comments
+//localhost:3000/posts/postId/comments
 router.get("/posts/:postId/comments", async (req, res) => {
   const postId = req.params.postId;
   const post = await Posts.findById(postId);
