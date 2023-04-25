@@ -12,7 +12,7 @@ module.exports = async (req, res, next) => {
   //authToken 검증
   if (!authToken || authType !== "Bearer") {
       res.status(400).json({
-      errorMessage: "로그인 후에 이용할 수 있는 기능입니다.",
+      errorMessage: "로그인이 필요한 기능입니다.",
     });
     return; // 더 이상 다음 코드로 진행 막기위해 리턴
   }
@@ -34,7 +34,7 @@ module.exports = async (req, res, next) => {
     next(); // 이 미들웨어 다음으로 보낸다
   } catch (error) {
     console.error(error);
-    res.status(400).json({errorMessage: "로그인 후에 이용할 수 있는 기능입니다."});
+    res.status(400).json({errorMessage: "로그인이 필요한 기능입니다."});
     return;
   }
 };
