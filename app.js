@@ -1,9 +1,12 @@
 const express = require('express');
+const cookieParser = require("cookie-parser");
 const app = express();
 const port = 3000;
 
 const postsRouter = require('./routes/posts.js'); //posts.js에 있는 router를 반환받음
 const commentsRouter = require('./routes/comments.js');
+const usersRouter = require("./routes/users.js");
+const authRouter = require("./routes/auth.js");
 const connect = require('./schemas');
 connect(); // 가져온 connect 함수 실행
 
@@ -11,10 +14,13 @@ connect(); // 가져온 connect 함수 실행
 // 모든 코드에서 body-parse를 등록해서 Request안에 있는 body데이터를 쓰겠다
 //post로 들어오는 body데이터를 사용하기 위해서는 이 문법을 통해 사용가능
 app.use(express.json());
+
+app.use(cookieParser());
+
 //전역미들웨어
 // 기본적으로 코드는 위에서 아래로 실행되기때문에 app.use()를 거치고 아래 코드 실행됨
-app.use('/api', postsRouter); // /api/posts 경로를 처리할 postsRouter 등록
-app.use('/api', commentsRouter);
+app.use('/api', [postsRouter,commentsRouter,usersRouter,authRouter]); // /api/posts 경로를 처리할 postsRouter 등록
+
 
 app.get('/', (req, res) => {
   res.send('Hello World!');

@@ -1,54 +1,70 @@
 const express = require('express');
 const router = express.Router();
 const Posts = require('../schemas/posts');
+const User = require('../schemas/user');
+const authMiddleware = require('../middlewares/auth-middleware');
 
 // ===============================게시글 조회 API===============================
-// localhost:3001/api/posts
-router.get('/posts', async (req, res) => {
-  const posts = await Posts.find(); // Posts 모델의 모든 데이터를 조회해서 posts에 할당
+router.get('/posts', authMiddleware, async (req, res) => {
+  const posts = await Posts.find(); 
+  
   const getPosts = posts.map((post) => {
     return {
       postId: post._id,
-      user: post.user,
+      userId: post.userId,
+      nickname: post.nickname,
       title: post.title,
       createdAt: post.createdAt,
     };
-    //postId에 post._id의 값을 할당
   });
   res.json({ data: getPosts });
 });
 
 // ===============================게시글 상세조회 API===============================
-//localhost:3001/api/posts/postId
-router.get('/posts/:postId', async (req, res) => {
-  const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
-  // # 400 body 또는 params를 입력받지 못한 경우
-  if (!postId) {
-    return res.status(400).json({
-      message: '데이터 형식이 올바르지 않습니다.',
+router.get('/posts/:postId', authMiddleware, async (req, res) => {
+  try {
+    const postId = req.params.postId; // URL에서 postId를 추출해서 postId에 할당
+    // # 400 body 또는 params를 입력받지 못한 경우
+    if (!postId) {
+      return res.status(400).json({
+        message: '데이터 형식이 올바르지 않습니다.',
+      });
+    }
+    const post = await Posts.findById(postId); // 입력받은 postId를 가진 데이터를 post에 할당
+    // # 404 _postId에 해당하는 게시글이 존재하지 않을 경우
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        errorMessage: '게시글 조회에 실패했습니다.',
+      });
+    }
+    // 해당 게시물을 작성한 사용자와 로그인된 유저가 일치하는지 확인
+    const { userId } = res.locals.user;
+    if (post.userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        errorMessage: '해당 게시물을 조회할 권한이 없습니다.',
+      });
+    }
+    res.json({
+      조회완료: {
+        postId: post._id,
+        userId: post.userId,
+        nickname: post.nickname,
+        title: post.title,
+        content: post.content,
+        createdAt: post.createdAt,
+      },
     });
-  }
-  const post = await Posts.findById(postId); // 입력받은 postId를 가진 데이터를 post에 할당
-  // # 404 _postId에 해당하는 게시글이 존재하지 않을 경우
-  if (!post) {
-    return res.status(404).json({
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({
       success: false,
-      errorMessage: '게시글 조회에 실패했습니다.',
+      errorMessage: '게시글 조회에 실패하였습니다.',
     });
   }
-  // 모두 정상적으로 입력되었을 때 출력
-  const getPosts = post.map((post) => {
-    //오류해결 : 이미 comments는 배열 형태이므로 []로 감싸면 안됨
-    return {
-      postId: post._id,
-      user: post.user,
-      title: post.title,
-      content: post.content,
-      createdAt: post.createdAt,
-    };
-  });
-  res.json({ 조회완료: getPosts[0] });
 });
+
 
 // ===============================게시글 수정 API===============================
 //localhost:3001/api/posts/postId
@@ -85,7 +101,7 @@ router.put('/posts/:postId', async (req, res) => {
   const updatePost = await Posts.findByIdAndUpdate(
     postId,
     { user, title, content },
-    { new: true }, //findByIdAndUpdate메서드가 수정된 데이터를 반환할지 결정한다
+    { new: true } //findByIdAndUpdate메서드가 수정된 데이터를 반환할지 결정한다
     //기본값으론 수정전 데이터를 반환하지만 new: true를 사용하면 수정된 문서가 반환된다.
   );
 
@@ -140,23 +156,49 @@ router.delete('/posts/:postId', async (req, res) => {
 });
 
 // ===============================게시글 등록 API===============================
-//localhost:3001/api/posts
-router.post('/posts', async (req, res) => {
-  const { user, password, title, content } = req.body;
-  if (!user || !password || !title || !content) {
-    return res.status(400).json({
+router.post('/posts', authMiddleware, async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const { userId, nickname } = res.locals.user;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        errorMessage: '로그인 후 해당 기능을 사용할 수 있습니다.',
+      });
+    }
+    if (!title || !content) {
+      return res.status(412).json({
+        success: false,
+        errorMessage: '데이터 형식이 올바르지 않습니다.',
+      });
+    }
+    if (typeof title !== 'string') {
+      return res.status(412).json({
+        success: false,
+        errorMessage: '게시글 제목의 형식이 일치하지 않습니다.',
+      });
+    }
+    if (typeof content !== 'string') {
+      return res.status(412).json({
+        success: false,
+        errorMessage: '게시글 내용의 형식이 일치하지 않습니다.',
+      });
+    }
+    const createdPost = await Posts.create({
+      title,
+      content,
+      userId,
+      nickname,
+      createdAt: new Date(),
+    });
+    res.json({ message: '게시글을 생성하였습니다.', 등록완료: createdPost });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({
       success: false,
-      errorMessage: '데이터 형식이 올바르지 않습니다',
+      errorMessage: '게시글 작성에 실패하였습니다.',
     });
   }
-  const createdPost = await Posts.create({
-    user,
-    password,
-    title,
-    content,
-    createdAt: new Date(),
-  });
-  res.json({ message: '게시글을 생성하였습니다.', 등록완료: createdPost });
 });
 
 module.exports = router;
