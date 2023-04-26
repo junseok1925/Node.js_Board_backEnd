@@ -6,18 +6,25 @@ const authMiddleware = require('../middlewares/auth-middleware');
 
 // ===============================게시글 조회 API===============================
 router.get('/posts', authMiddleware, async (req, res) => {
-  const posts = await Posts.find();
-
-  const getPosts = posts.map((post) => {
-    return {
-      postId: post._id,
-      userId: post.userId,
-      nickname: post.nickname,
-      title: post.title,
-      createdAt: post.createdAt,
-    };
-  });
-  res.json({ data: getPosts });
+  try {
+    const posts = await Posts.find();
+    const getPosts = posts.map((post) => {
+      return {
+        postId: post._id,
+        userId: post.userId,
+        nickname: post.nickname,
+        title: post.title,
+        createdAt: post.createdAt,
+      };
+    });
+    res.json({ data: getPosts });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({
+      success: false,
+      errorMessage: '게시글 조회에 실패하였습니다.',
+    });
+  }
 });
 
 // ===============================게시글 상세조회 API===============================
@@ -37,7 +44,7 @@ router.get('/posts/:postId', authMiddleware, async (req, res) => {
     if (!post) {
       return res.status(404).json({
         success: false,
-        errorMessage: '게시글 조회에 실패했습니다.',
+        errorMessage: '존재하지않는 게시물입니다.',
       });
     }
     // 해당 게시물을 작성한 사용자와 로그인된 유저가 일치하는지 확인
@@ -74,13 +81,13 @@ router.put('/posts/:postId', authMiddleware, async (req, res) => {
     const { title, content } = req.body;
 
     if (!title) {
-      return res.status(400).json({
+      return res.status(412).json({
         message: '게시글 제목의 형식이 일치하지 않습니다.',
       });
     }
 
     if (!content) {
-      return res.status(400).json({
+      return res.status(412).json({
         message: '게시글 내용의 형식이 일치하지 않습니다.',
       });
     }
@@ -96,7 +103,7 @@ router.put('/posts/:postId', authMiddleware, async (req, res) => {
     if (post.userId !== userId) {
       return res.status(403).json({
         success: false,
-        errorMessage: '해당 게시물을 삭제할 권한이 없습니다.',
+        errorMessage: '해당 게시물을 수정할 권한이 없습니다.',
       });
     }
     // 게시글 업데이트
@@ -117,7 +124,7 @@ router.put('/posts/:postId', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(400).json({
+    res.status(401).json({
       success: false,
       errorMessage: '게시글 수정에 실패하였습니다.',
     });

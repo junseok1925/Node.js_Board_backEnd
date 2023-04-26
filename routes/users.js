@@ -6,9 +6,7 @@ const User = require('../schemas/user.js');
 
 // ===================================== 내 정보 조회 API =====================================
 router.get('/users/me', authMiddleware, async (req, res) => {
-  console.log(res.locals.user);
   const { nickname, password } = res.locals.user;
-
   res.status(200).json({
     users: {
       nickname: nickname,
@@ -50,12 +48,10 @@ router.post('/users', async (req, res) => {
     }
 
     // #412 nickname이 중복된 경우
-    const existsUsers = await User.findOne({
-      nickname,
-    });
+    const existsUsers = await User.findOne({nickname});
     if (existsUsers) {
       return res.status(412).json({
-        errorMessage: '이미 존재하는 닉네임입니다.',
+        errorMessage: '중복된 닉네임입니다.',
       });
     }
 

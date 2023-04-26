@@ -14,7 +14,7 @@ router.post('/posts/:postId/comments', authMiddleware, async (req, res) => {
     const { userId, nickname } = res.locals.user;
 
     if (!userId) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
         errorMessage: '로그인 후 해당 기능을 사용할 수 있습니다.',
       });
@@ -28,9 +28,9 @@ router.post('/posts/:postId/comments', authMiddleware, async (req, res) => {
     }
 
     if (!postId) {
-      return res.status(400).json({
+      return res.status(412).json({
         success: false,
-        message: '데이터 형식이 올바르지 않습니다.',
+        message: '데이터 형식이 올바르지 않습니다',
       });
     }
     const post = await Posts.findById(postId);
@@ -48,7 +48,7 @@ router.post('/posts/:postId/comments', authMiddleware, async (req, res) => {
       postId: postId, // 해당 게시물에 대한 댓글임을 알려주기위해 추가
     });
     res
-      .status(200)
+      .status(201)
       .json({ message: '댓글을 작성했습니다.', 댓글생성완료: createdComments });
   } catch (error) {
     console.error(error);
@@ -87,7 +87,6 @@ router.get('/posts/:postId/comments', async (req, res) => {
 });
 
 // ===============================댓글 수정 API===============================
-//localhost:3001/posts/postId/comments/commentId
 router.put(
   '/posts/:postId/comments/:commentId',
   authMiddleware,
@@ -95,11 +94,18 @@ router.put(
     try {
       const { userId } = res.locals.user;
       const commentId = req.params.commentId;
+      const postId = req.params.postId;
       const { comment } = req.body;
 
       if (!comment) {
         return res.status(412).json({
           message: '데이터 형식이 올바르지 않습니다.',
+        });
+      }
+
+      if (!postId) {
+        return res.status(404).json({
+          message: '게시글이 존재하지 않습니다.',
         });
       }
 
@@ -114,7 +120,7 @@ router.put(
       if (getComment.userId !== userId) {
         return res.status(403).json({
           success: false,
-          errorMessage: '해당 게시물을 삭제할 권한이 없습니다.',
+          errorMessage: '해당 게시물을 수정할 권한이 없습니다.',
         });
       }
 
@@ -142,43 +148,47 @@ router.put(
 );
 // ===============================댓글 삭제 API===============================
 //localhost:3001/posts/postId/comments/commentId
-router.delete('/posts/:postId/comments/:commentId',authMiddleware, async (req, res) => {
-  try {
-    const postId = req.params.postId;
-    const commentId = req.params.commentId;
-    const { userId } = res.locals.user;
+router.delete(
+  '/posts/:postId/comments/:commentId',
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const postId = req.params.postId;
+      const commentId = req.params.commentId;
+      const { userId } = res.locals.user;
 
-    if (!postId) {
-      return res.status(404).json({
-        message: '게시글이 존재하지 않습니다',
-      });
-    }
+      if (!postId) {
+        return res.status(404).json({
+          message: '게시글이 존재하지 않습니다',
+        });
+      }
 
-    const getComment = await Comments.findById(commentId);
-    if (!getComment) {
-      return res.status(404).json({
+      const getComment = await Comments.findById(commentId);
+      if (!getComment) {
+        return res.status(404).json({
+          success: false,
+          errorMessage: '댓글 조회에 실패하였습니다.',
+        });
+      }
+
+      if (getComment.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          errorMessage: '해당 댓글을 삭제할 권한이 없습니다.',
+        });
+      }
+
+      await Comments.deleteOne({ _id: commentId, postId: postId });
+
+      res.json({ message: '댓글이 삭제되었습니다.' });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({
         success: false,
-        errorMessage: '댓글 조회에 실패하였습니다.',
+        errorMessage: '게시글 삭제에 실패하였습니다.',
       });
     }
-
-    if (getComment.userId !== userId) {
-      return res.status(403).json({
-        success: false,
-        errorMessage: '해당 댓글을 삭제할 권한이 없습니다.',
-      });
-    }
-
-    await Comments.deleteOne({ _id: commentId, postId: postId });
-
-    res.json({ message: '댓글이 삭제되었습니다.' });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      success: false,
-      errorMessage: '게시글 삭제에 실패하였습니다.',
-    });
   }
-});
+);
 
 module.exports = router;
